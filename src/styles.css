@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  @apply bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 text-gray-800;
+  font-family: 'Inter', sans-serif;
+}
+
+.eco-card {
+  @apply bg-white/80 backdrop-blur-sm border border-green-100 shadow-lg shadow-green-100/50;
+}
+
+.eco-gradient {
+  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+}
+
+.waste-icon {
+  @apply text-green-600;
+}
+
+.kpi-card {
+  @apply bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-lg shadow-green-500/30;
+}
+
+.kpi-card-secondary {
+  @apply bg-gradient-to-br from-teal-500 to-cyan-600 text-white shadow-lg shadow-teal-500/30;
+}
+
+.kpi-card-warning {
+  @apply bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/30;
+}
+
+.kpi-card-info {
+  @apply bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30;
+}
+
+
