@@ -1,0 +1,67 @@
+# Fichiers et dossiers à ignorer lors du build Cloud Build
+
+# Node modules (sera reinstallé)
+node_modules/
+
+# Fichiers de développement
+.env.local
+.env.development
+.env.test
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE et éditeurs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Système
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation et exemples
+README.md
+AUTHENTICATION_SETUP.md
+CREATE_ADMIN_GUIDE.md
+*.md
+
+# Scripts de développement
+create-admin-user.js
+create-admin-user.mjs
+env.example
+
+# Fichiers de build locaux (sera rebuild)
+dist/
+build/
+
+# Cache
+.cache/
+.parcel-cache/
+
+# Tests
+coverage/
+__tests__/
+*.test.js
+*.test.ts
+*.test.tsx
+
+# Fichiers temporaires
+*.tmp
+*.temp
+
+# Backup files
+*.backup
+*.bak
+
+# Configuration locale
+.env
+.env.*
+!.env.example
