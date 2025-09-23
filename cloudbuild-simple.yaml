@@ -1,0 +1,46 @@
+steps:
+  # Étape 1: Installer les dépendances
+  - name: 'node:18-alpine'
+    entrypoint: 'npm'
+    args: ['ci']
+
+  # Étape 2: Build de l'application React
+  - name: 'node:18-alpine'
+    entrypoint: 'npm'
+    args: ['run', 'build']
+    env:
+      - 'NODE_ENV=production'
+
+  # Étape 3: Build de l'image Docker
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build',
+      '-t', 'gcr.io/$PROJECT_ID/sengreen-dashboard:latest',
+      '.'
+    ]
+
+  # Étape 4: Push de l'image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/sengreen-dashboard:latest']
+
+  # Étape 5: Déploiement sur Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args: [
+      'run', 'deploy', 'sengreen-dashboard',
+      '--image', 'gcr.io/$PROJECT_ID/sengreen-dashboard:latest',
+      '--region', 'us-central1',
+      '--platform', 'managed',
+      '--allow-unauthenticated',
+      '--port', '80',
+      '--memory', '1Gi',
+      '--cpu', '1'
+    ]
+
+# Configuration simplifiée
+timeout: '1200s'
+options:
+  machineType: 'E2_HIGHCPU_8'
+
+images:
+  - 'gcr.io/$PROJECT_ID/sengreen-dashboard:latest'
