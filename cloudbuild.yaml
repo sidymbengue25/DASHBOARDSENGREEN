@@ -1,121 +1,54 @@
 steps:
-  # Étape 1: Installer les dépendances
+  # Étape 1: Build complet en une seule étape
   - name: 'node:18-alpine'
-    entrypoint: 'npm'
-    args: ['ci']
-    id: 'install-dependencies'
-
-  # Étape 2: Build de l'application React
-  - name: 'node:18-alpine'
-    entrypoint: 'npm'
-    args: ['run', 'build']
-    id: 'build-app'
-    waitFor: ['install-dependencies']
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        echo "📦 Installation des dépendances..."
+        npm ci --legacy-peer-deps
+        
+        echo "🏗️ Build de l'application..."
+        npm run build
+        
+        echo "✅ Build terminé"
     env:
-      # Variables d'environnement pour le build
       - 'NODE_ENV=production'
       - 'GENERATE_SOURCEMAP=false'
 
-  # Étape 3: Build de l'image Docker
+  # Étape 2: Build de l'image Docker
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'build',
-      '-t', 'gcr.io/$PROJECT_ID/sengreen-dashboard:$BUILD_ID',
-      '-t', 'gcr.io/$PROJECT_ID/sengreen-dashboard:latest',
+      '-t', 'gcr.io/$PROJECT_ID/sengreen:latest',
       '.'
     ]
-    id: 'build-docker-image'
-    waitFor: ['build-app']
 
-  # Étape 4: Push de l'image vers Container Registry
+  # Étape 3: Push de l'image
   - name: 'gcr.io/cloud-builders/docker'
-    args: [
-      'push', 
-      'gcr.io/$PROJECT_ID/sengreen-dashboard:$BUILD_ID'
-    ]
-    id: 'push-image'
-    waitFor: ['build-docker-image']
+    args: ['push', 'gcr.io/$PROJECT_ID/sengreen:latest']
 
-  # Étape 5: Push du tag latest
-  - name: 'gcr.io/cloud-builders/docker'
-    args: [
-      'push', 
-      'gcr.io/$PROJECT_ID/sengreen-dashboard:latest'
-    ]
-    id: 'push-latest'
-    waitFor: ['push-image']
-
-  # Étape 6: Déploiement sur Cloud Run
+  # Étape 4: Déploiement sur Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args: [
-      'run', 'deploy', 'sengreen-dashboard',
-      '--image', 'gcr.io/$PROJECT_ID/sengreen-dashboard:$BUILD_ID',
-      '--region', 'europe-west1',
+      'run', 'deploy', 'sengreen',
+      '--image', 'gcr.io/$PROJECT_ID/sengreen:latest',
+      '--region', 'us-central1',
       '--platform', 'managed',
       '--allow-unauthenticated',
       '--port', '80',
       '--memory', '1Gi',
       '--cpu', '1',
       '--concurrency', '80',
-      '--max-instances', '10',
-      '--min-instances', '0',
-      '--timeout', '300',
-      '--set-env-vars', 'NODE_ENV=production',
-      '--set-env-vars', 'PORT=80'
+      '--max-instances', '10'
     ]
-    id: 'deploy-cloud-run'
-    waitFor: ['push-latest']
 
-# Options de build
-options:
-  # Machine plus puissante pour build plus rapide
-  machineType: 'E2_HIGHCPU_8'
-  
-  # Disk size pour accommoder node_modules et build
-  diskSizeGb: 100
-  
-  # Variables d'environnement globales
-  env:
-    - 'NODE_ENV=production'
-
-# Timeout global (au niveau racine)
+# Configuration
 timeout: '1200s'
+options:
+  machineType: 'E2_HIGHCPU_8'
+  diskSizeGb: 100
 
-# Substitutions (variables configurables)
-substitutions:
-  # Région par défaut
-  _REGION: 'us-central1'
-  
-  # Service name
-  _SERVICE_NAME: 'sengreen-dashboard'
-  
-  # Port de l'application
-  _PORT: '80'
-  
-  # Mémoire allouée
-  _MEMORY: '1Gi'
-  
-  # CPU alloué
-  _CPU: '1'
-  
-  # Concurrence max
-  _CONCURRENCY: '80'
-  
-  # Instances max
-  _MAX_INSTANCES: '10'
-
-# Images à conserver dans Container Registry
 images:
-  - 'gcr.io/$PROJECT_ID/sengreen-dashboard:$BUILD_ID'
-  - 'gcr.io/$PROJECT_ID/sengreen-dashboard:latest'
-
-# Logs détaillés
-logsBucket: 'gs://${PROJECT_ID}_cloudbuild'
-
-# Tags pour organisation
-tags:
-  - 'sengreen'
-  - 'dashboard'
-  - 'react'
-  - 'production'
+  - 'gcr.io/$PROJECT_ID/sengreen:latest'
