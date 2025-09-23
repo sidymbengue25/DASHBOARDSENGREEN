@@ -12,11 +12,11 @@ import { SmartAlerts } from './components/SmartAlerts'
 import { ForecastingModule } from './components/ForecastingModule'
 import { AdvancedGISModule } from './components/AdvancedGISModule'
 import { DensityMap } from './components/DensityMap'
-import { HistoriqueDepots } from './components/HistoriqueDepots'
+// import { HistoriqueDepots } from './components/HistoriqueDepots'
 import Demographics from './components/Demographics'
 import { ComparisonModule } from './components/ComparisonModule'
 import { SatelliteModule } from './components/SatelliteModule'
-import { TestComponent } from './components/TestComponent'
+// import { TestComponent } from './components/TestComponent'
 import { getCollectes, getUsers, getDepots, getHistoriqueDepots, getMobilier, getNotifications } from './services/firestoreService'
 
 export type Position = [number, number]
