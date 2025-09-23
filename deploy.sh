@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 # Configuration
 PROJECT_ID=${1:-$(gcloud config get-value project)}
 SERVICE_NAME="sengreen-dashboard"
-REGION="europe-west1"
+REGION="us-central1"
 
 echo -e "${BLUE}🚀 Déploiement du Dashboard SENGREEN${NC}"
 echo -e "${BLUE}Project ID: ${PROJECT_ID}${NC}"

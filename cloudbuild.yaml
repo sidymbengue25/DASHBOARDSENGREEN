@@ -75,12 +75,12 @@ options:
   # Disk size pour accommoder node_modules et build
   diskSizeGb: 100
   
-  # Timeout global
-  timeout: '1200s'
-  
   # Variables d'environnement globales
   env:
     - 'NODE_ENV=production'
+
+# Timeout global (au niveau racine)
+timeout: '1200s'
 
 # Substitutions (variables configurables)
 substitutions:
