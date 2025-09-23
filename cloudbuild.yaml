@@ -1,0 +1,64 @@
+# Cloud Build configuration for SENGREEN Dashboard
+# Builds the Docker image with Vite env vars and pushes to Artifact Registry
+
+substitutions:
+  _REGION: europe-west1
+  _REPO: sengreen-repo
+  _IMAGE: dashboard
+  _TAG: latest
+  _VITE_FIREBASE_API_KEY: ""
+  _VITE_FIREBASE_AUTH_DOMAIN: ""
+  _VITE_FIREBASE_PROJECT_ID: ""
+  _VITE_FIREBASE_STORAGE_BUCKET: ""
+  _VITE_FIREBASE_MESSAGING_SENDER_ID: ""
+  _VITE_FIREBASE_APP_ID: ""
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Docker build'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}:${_TAG}'
+      - '--build-arg'
+      - 'VITE_FIREBASE_API_KEY=${_VITE_FIREBASE_API_KEY}'
+      - '--build-arg'
+      - 'VITE_FIREBASE_AUTH_DOMAIN=${_VITE_FIREBASE_AUTH_DOMAIN}'
+      - '--build-arg'
+      - 'VITE_FIREBASE_PROJECT_ID=${_VITE_FIREBASE_PROJECT_ID}'
+      - '--build-arg'
+      - 'VITE_FIREBASE_STORAGE_BUCKET=${_VITE_FIREBASE_STORAGE_BUCKET}'
+      - '--build-arg'
+      - 'VITE_FIREBASE_MESSAGING_SENDER_ID=${_VITE_FIREBASE_MESSAGING_SENDER_ID}'
+      - '--build-arg'
+      - 'VITE_FIREBASE_APP_ID=${_VITE_FIREBASE_APP_ID}'
+      - '.'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Docker push'
+    args:
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}:${_TAG}'
+
+images:
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}:${_TAG}'
+
+# To deploy to Cloud Run after push, uncomment the following step and set _SERVICE
+# substitutions:
+#   _SERVICE: sengreen-dashboard
+# steps:
+#   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+#     id: 'Deploy to Cloud Run'
+#     entrypoint: gcloud
+#     args:
+#       - 'run'
+#       - 'deploy'
+#       - '${_SERVICE}'
+#       - '--image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}:${_TAG}'
+#       - '--region=${_REGION}'
+#       - '--platform=managed'
+#       - '--allow-unauthenticated'
+
