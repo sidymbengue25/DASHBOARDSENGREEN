@@ -181,7 +181,7 @@ const Demographics: React.FC<DemographicsProps> = ({ collectes, depots }) => {
           depotCount: stats.depotCount,
           wastePerCapita: Math.round(wastePerCapita * 100) / 100,
           mainActivity: zone.activity,
-          coordinates: zone.baseCoords
+          coordinates: [zone.baseCoords[0], zone.baseCoords[1]] as [number, number]
         }
       })
 

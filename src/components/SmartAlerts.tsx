@@ -24,6 +24,7 @@ interface AlertStats {
   active: number
   acknowledged: number
   resolved: number
+  false_positive: number
   byType: Record<string, number>
   bySeverity: Record<string, number>
   averageResponseTime: number
@@ -46,6 +47,7 @@ export const SmartAlerts: React.FC<SmartAlertsProps> = ({ collectes, depots }) =
     active: 0,
     acknowledged: 0,
     resolved: 0,
+    false_positive: 0,
     byType: {},
     bySeverity: {},
     averageResponseTime: 0,
@@ -128,6 +130,7 @@ export const SmartAlerts: React.FC<SmartAlertsProps> = ({ collectes, depots }) =
       active: 0,
       acknowledged: 0,
       resolved: 0,
+      false_positive: 0,
       byType: {},
       bySeverity: {},
       averageResponseTime: 0,
