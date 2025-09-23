@@ -37,7 +37,9 @@ steps:
       '--cpu', '1'
     ]
 
+
 # Configuration simplifiée
+logsBucket: 'gs://${PROJECT_ID}_cloudbuild'
 timeout: '1200s'
 options:
   machineType: 'E2_HIGHCPU_8'
