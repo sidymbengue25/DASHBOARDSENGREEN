@@ -31,9 +31,11 @@ export const ForecastingModule: React.FC<ForecastingModuleProps> = ({ collectes,
   const [forecastData, setForecastData] = useState<ForecastData[]>([])
   const [selectedPeriod, setSelectedPeriod] = useState<string>('30d')
   const [selectedWasteType, setSelectedWasteType] = useState<string>('all')
+  const [selectedRegion, setSelectedRegion] = useState<string>('all')
   const [loading, setLoading] = useState(true)
   const [simulations, setSimulations] = useState<PolicySimulation[]>([])
 
+  // Types de déchets spécifiques au Sénégal
   const wasteTypes = [
     { id: 'autre', name: 'Autre', color: 'gray' },
     { id: 'plastique', name: 'Plastique', color: 'blue' },
@@ -44,12 +46,105 @@ export const ForecastingModule: React.FC<ForecastingModuleProps> = ({ collectes,
     { id: 'divers', name: 'Divers', color: 'pink' }
   ]
 
+  // Régions du Sénégal
+  const senegalRegions = [
+    { id: 'all', name: 'Tout le Sénégal', population: 17196308 },
+    { id: 'dakar', name: 'Dakar', population: 3732284 },
+    { id: 'thies', name: 'Thiès', population: 2016625 },
+    { id: 'diourbel', name: 'Diourbel', population: 1656221 },
+    { id: 'fatick', name: 'Fatick', population: 822197 },
+    { id: 'kaffrine', name: 'Kaffrine', population: 592880 },
+    { id: 'kaolack', name: 'Kaolack', population: 976976 },
+    { id: 'kedougou', name: 'Kédougou', population: 185034 },
+    { id: 'kolda', name: 'Kolda', population: 714392 },
+    { id: 'louga', name: 'Louga', population: 930456 },
+    { id: 'matam', name: 'Matam', population: 687227 },
+    { id: 'saint-louis', name: 'Saint-Louis', population: 1018645 },
+    { id: 'sedhiou', name: 'Sédhiou', population: 568359 },
+    { id: 'tambacounda', name: 'Tambacounda', population: 711651 },
+    { id: 'ziguinchor', name: 'Ziguinchor', population: 609281 }
+  ]
+
   const periodOptions = [
     { id: '7d', name: '7 jours', days: 7 },
     { id: '30d', name: '30 jours', days: 30 },
-    { id: '90d', name: '90 jours', days: 90 },
+    { id: '90d', name: '3 mois (saison sèche)', days: 90 },
+    { id: '6m', name: '6 mois (saison des pluies)', days: 180 },
     { id: '1y', name: '1 an', days: 365 }
   ]
+
+  // Politiques et initiatives spécifiques au Sénégal
+  const senegalPolicies: PolicySimulation[] = [
+    {
+      id: 'zero-waste-dakar',
+      name: 'Initiative Zéro Déchet Dakar',
+      description: 'Programme de réduction des déchets dans la région de Dakar avec tri sélectif et compostage',
+      impact: -25,
+      cost: 2500000000, // 2.5 milliards FCFA
+      implementationTime: 18,
+      effectiveness: 85
+    },
+    {
+      id: 'plastic-ban',
+      name: 'Interdiction des sachets plastiques',
+      description: 'Application stricte de la loi sur les sachets plastiques non biodégradables',
+      impact: -15,
+      cost: 500000000, // 500 millions FCFA
+      implementationTime: 6,
+      effectiveness: 70
+    },
+    {
+      id: 'community-centers',
+      name: 'Centres de collecte communautaires',
+      description: 'Installation de 200 centres de collecte dans les quartiers populaires',
+      impact: -20,
+      cost: 1800000000, // 1.8 milliards FCFA
+      implementationTime: 12,
+      effectiveness: 80
+    },
+    {
+      id: 'recycling-industry',
+      name: 'Industrie du recyclage',
+      description: 'Développement d\'usines de recyclage locales pour créer une économie circulaire',
+      impact: -30,
+      cost: 5000000000, // 5 milliards FCFA
+      implementationTime: 24,
+      effectiveness: 90
+    },
+    {
+      id: 'education-campaign',
+      name: 'Campagne d\'éducation environnementale',
+      description: 'Sensibilisation dans les écoles et communautés sur la gestion des déchets',
+      impact: -10,
+      cost: 300000000, // 300 millions FCFA
+      implementationTime: 3,
+      effectiveness: 60
+    },
+    {
+      id: 'composting-program',
+      name: 'Programme de compostage urbain',
+      description: 'Transformation des déchets organiques en compost pour l\'agriculture urbaine',
+      impact: -18,
+      cost: 800000000, // 800 millions FCFA
+      implementationTime: 9,
+      effectiveness: 75
+    }
+  ]
+
+  // Facteurs climatiques et saisonniers du Sénégal
+  const getSenegalSeasonalFactors = (date: Date) => {
+    const month = date.getMonth() // 0-11
+    
+    // Saison des pluies (juin-octobre) vs saison sèche
+    const isRainySeason = month >= 5 && month <= 9
+    
+    return {
+      weather: isRainySeason ? 1.3 : 0.8, // Plus de déchets pendant la saison des pluies
+      season: isRainySeason ? 1.2 : 0.9,
+      events: month === 10 || month === 11 ? 1.4 : 1.0, // Tabaski et fêtes de fin d'année
+      population: 1.0 + (month * 0.01) // Légère croissance démographique
+    }
+  }
 
   // Simuler la génération de données de prévision
   useEffect(() => {
@@ -61,22 +156,35 @@ export const ForecastingModule: React.FC<ForecastingModuleProps> = ({ collectes,
         const date = new Date()
         date.setDate(date.getDate() + i)
         
-        // Simulation de prédiction basée sur les données existantes
-        const baseVolume = collectes.length + depots.length
-        const seasonalFactor = Math.sin((date.getMonth() / 12) * 2 * Math.PI) * 0.3 + 0.7
-        const weatherFactor = Math.random() * 0.4 + 0.8
-        const eventFactor = Math.random() > 0.9 ? 1.5 : 1.0
+        // Utiliser les facteurs saisonniers du Sénégal
+        const senegalFactors = getSenegalSeasonalFactors(date)
+        
+        // Volume de base selon la région sélectionnée
+        const selectedRegionData = senegalRegions.find(r => r.id === selectedRegion)
+        const regionPopulationFactor = selectedRegionData ? 
+          (selectedRegionData.population / senegalRegions[0].population) : 1.0
+        
+        const baseVolume = (collectes.length + depots.length) * regionPopulationFactor
+        
+        // Facteur de variabilité quotidienne
+        const dailyVariation = 0.85 + Math.random() * 0.3 // 0.85 à 1.15
+        
+        // Calcul du volume prédit avec facteurs sénégalais
+        const totalFactor = senegalFactors.weather * senegalFactors.season * 
+                           senegalFactors.events * dailyVariation
+        
+        const predictedVolume = Math.round(baseVolume * totalFactor)
+        
+        // Confiance basée sur la stabilité des facteurs
+        const confidence = Math.min(95, 60 + 
+          (senegalFactors.season * 20) + 
+          (Math.random() * 15))
         
         data.push({
-          date: date.toISOString(),
-          predictedVolume: Math.round(baseVolume * seasonalFactor * weatherFactor * eventFactor),
-          confidence: Math.random() * 20 + 70, // 70-90%
-          factors: {
-            weather: weatherFactor,
-            season: seasonalFactor,
-            events: eventFactor,
-            population: Math.random() * 0.2 + 0.9
-          }
+          date: date.toISOString().split('T')[0],
+          predictedVolume: predictedVolume,
+          confidence: Math.round(confidence),
+          factors: senegalFactors
         })
       }
       
@@ -85,51 +193,21 @@ export const ForecastingModule: React.FC<ForecastingModuleProps> = ({ collectes,
     }
 
     generateForecastData()
-  }, [collectes, depots, selectedPeriod])
-
-  // Simuler les simulations de politiques
-  useEffect(() => {
-    const policySimulations: PolicySimulation[] = [
-      {
-        id: 'bins',
-        name: 'Déploiement de bacs intelligents',
-        description: 'Installation de bacs connectés avec capteurs de remplissage',
-        impact: 25,
-        cost: 150000,
-        implementationTime: 6,
-        effectiveness: 85
-      },
-      {
-        id: 'awareness',
-        name: 'Campagne de sensibilisation',
-        description: 'Programme éducatif pour réduire les déchets à la source',
-        impact: 15,
-        cost: 50000,
-        implementationTime: 3,
-        effectiveness: 70
-      },
-      {
-        id: 'incentives',
-        name: 'Système d\'incitation',
-        description: 'Récompenses pour les citoyens qui trient correctement',
-        impact: 30,
-        cost: 80000,
-        implementationTime: 4,
-        effectiveness: 90
-      },
-      {
-        id: 'collection',
-        name: 'Optimisation des collectes',
-        description: 'Amélioration des routes et fréquences de collecte',
-        impact: 20,
-        cost: 100000,
-        implementationTime: 8,
-        effectiveness: 75
-      }
-    ]
     
-    setSimulations(policySimulations)
-  }, [])
+    // Utiliser les politiques spécifiques au Sénégal
+    setSimulations(senegalPolicies)
+  }, [collectes, depots, selectedPeriod, selectedRegion])
+
+  // Formater les coûts en FCFA
+  const formatCostFCFA = (cost: number): string => {
+    if (cost >= 1000000000) {
+      return `${(cost / 1000000000).toFixed(1)} milliards FCFA`
+    } else if (cost >= 1000000) {
+      return `${(cost / 1000000).toFixed(0)} millions FCFA`
+    } else {
+      return `${cost.toLocaleString()} FCFA`
+    }
+  }
 
   const filteredData = forecastData.filter(item => {
     if (selectedWasteType === 'all') return true
@@ -169,15 +247,30 @@ export const ForecastingModule: React.FC<ForecastingModuleProps> = ({ collectes,
       <div className="eco-card rounded-xl p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Module de prévision</h2>
-            <p className="text-gray-600">Prédiction de l'évolution des volumes de déchets via machine learning et simulation d'impact des politiques</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Module de prévision - Sénégal</h2>
+            <p className="text-gray-600">
+              Prédiction de l'évolution des volumes de déchets au Sénégal avec prise en compte des saisons, 
+              de la démographie régionale et simulation d'impact des politiques nationales
+            </p>
           </div>
           
           <div className="flex flex-wrap gap-4 mt-4 lg:mt-0">
             <select
+              value={selectedRegion}
+              onChange={(e) => setSelectedRegion(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white"
+            >
+              {senegalRegions.map(region => (
+                <option key={region.id} value={region.id}>
+                  {region.name} {region.id !== 'all' && `(${(region.population / 1000000).toFixed(1)}M hab)`}
+                </option>
+              ))}
+            </select>
+            
+            <select
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white"
             >
               {periodOptions.map(period => (
                 <option key={period.id} value={period.id}>
@@ -189,7 +282,7 @@ export const ForecastingModule: React.FC<ForecastingModuleProps> = ({ collectes,
             <select
               value={selectedWasteType}
               onChange={(e) => setSelectedWasteType(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white"
             >
               <option value="all">Tous les types</option>
               {wasteTypes.map(type => (
@@ -288,7 +381,7 @@ export const ForecastingModule: React.FC<ForecastingModuleProps> = ({ collectes,
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Coût d'implémentation</span>
-                    <span className="font-medium">{simulation.cost.toLocaleString()} €</span>
+                    <span className="font-medium text-green-700">{formatCostFCFA(simulation.cost)}</span>
                   </div>
                   
                   <div className="flex justify-between items-center">

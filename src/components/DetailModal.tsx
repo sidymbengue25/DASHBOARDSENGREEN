@@ -219,6 +219,19 @@ export const DetailModal: React.FC<DetailModalProps> = ({ isOpen, onClose, item,
               </div>
             </div>
             
+            
+            {item.imageRamassage && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Image du signalement</label>
+                <div className="bg-gray-50 rounded-lg p-3 border">
+                  <img 
+                    src={item.imageRamassage} 
+                    alt="Dépôt ramassé" 
+                    className="max-w-full h-auto rounded border"
+                  />
+                </div>
+              </div>
+            )}
             {item.commentaire && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Commentaire</label>

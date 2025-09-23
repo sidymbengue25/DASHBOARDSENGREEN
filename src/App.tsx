@@ -14,6 +14,9 @@ import { AdvancedGISModule } from './components/AdvancedGISModule'
 import { DensityMap } from './components/DensityMap'
 import { HistoriqueDepots } from './components/HistoriqueDepots'
 import Demographics from './components/Demographics'
+import { ComparisonModule } from './components/ComparisonModule'
+import { SatelliteModule } from './components/SatelliteModule'
+import { TestComponent } from './components/TestComponent'
 import { getCollectes, getUsers, getDepots, getHistoriqueDepots, getMobilier, getNotifications } from './services/firestoreService'
 
 export type Position = [number, number]
@@ -94,38 +97,9 @@ export default function App() {
       case 'forecasting':
         return <ForecastingModule collectes={collectes} depots={depots} />
       case 'comparison':
-        return (
-          <div className="space-y-6">
-            <div className="eco-card rounded-xl p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Comparaison spatio-temporelle</h2>
-              <p className="text-gray-600 mb-6">Évolution de la situation sur une période donnée et comparaison entre zones ou périodes.</p>
-              <div className="h-96 bg-gray-100 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500">Module de comparaison spatio-temporelle en développement</p>
-              </div>
-            </div>
-          </div>
-        )
+        return <ComparisonModule collectes={collectes} depots={depots} historiqueDepots={historiqueDepots} />
       case 'satellite':
-        return (
-          <div className="space-y-6">
-            <div className="eco-card rounded-xl p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Données satellitaires</h2>
-              <p className="text-gray-600 mb-6">Intégration des données Sentinel-2, Landsat et GNSS pour l'analyse des changements environnementaux.</p>
-              <div className="h-96 bg-gray-100 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500">Module de données satellitaires en développement</p>
-              </div>
-            </div>
-          </div>
-        )
-      case 'historique':
-        return <HistoriqueDepots historiqueDepots={historiqueDepots} depots={depots} />
-      default:
-        return (
-          <div className="eco-card rounded-xl p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Section non trouvée</h2>
-            <p className="text-gray-600">Cette section n'existe pas encore.</p>
-          </div>
-        )
+        return <SatelliteModule collectes={collectes} depots={depots} />
     }
   }
 

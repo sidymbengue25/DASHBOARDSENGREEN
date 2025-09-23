@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 PROJECT_ID=${1:-$(gcloud config get-value project)}
-SERVICE_NAME="sengreen-dashboard"
+SERVICE_NAME="sengreen"
 REGION="us-central1"
 
 echo -e "${BLUE}🚀 Déploiement du Dashboard SENGREEN${NC}"
@@ -80,10 +80,17 @@ echo -e "${GREEN}✅ Configuration terminée${NC}"
 echo -e "${YELLOW}🏗️ Lancement du build et déploiement...${NC}"
 echo -e "${BLUE}Cette étape peut prendre 3-5 minutes...${NC}"
 
-gcloud builds submit \
-    --config cloudbuild.yaml \
-    --substitutions=_REGION=$REGION,_SERVICE_NAME=$SERVICE_NAME \
-    .
+# Choisir la configuration optimisée si disponible
+if [ -f "cloudbuild-optimized.yaml" ]; then
+    echo -e "${BLUE}📋 Utilisation de la configuration optimisée...${NC}"
+    gcloud builds submit --config cloudbuild-optimized.yaml .
+else
+    echo -e "${BLUE}📋 Utilisation de la configuration standard...${NC}"
+    gcloud builds submit \
+        --config cloudbuild.yaml \
+        --substitutions=_REGION=$REGION,_SERVICE_NAME=$SERVICE_NAME \
+        .
+fi
 
 # Vérification du déploiement
 echo -e "${YELLOW}🔍 Vérification du déploiement...${NC}"
