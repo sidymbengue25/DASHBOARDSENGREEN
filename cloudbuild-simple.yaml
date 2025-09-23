@@ -15,20 +15,20 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'build',
-      '-t', 'gcr.io/$PROJECT_ID/sengreen-dashboard:latest',
+      '-t', 'gcr.io/$PROJECT_ID/sengreen:latest',
       '.'
     ]
 
   # Étape 4: Push de l'image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/sengreen-dashboard:latest']
+    args: ['push', 'gcr.io/$PROJECT_ID/sengreen:latest']
 
   # Étape 5: Déploiement sur Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args: [
-      'run', 'deploy', 'sengreen-dashboard',
-      '--image', 'gcr.io/$PROJECT_ID/sengreen-dashboard:latest',
+      'run', 'deploy', 'sengreen',
+      '--image', 'gcr.io/$PROJECT_ID/sengreen:latest',
       '--region', 'us-central1',
       '--platform', 'managed',
       '--allow-unauthenticated',
@@ -43,4 +43,4 @@ options:
   machineType: 'E2_HIGHCPU_8'
 
 images:
-  - 'gcr.io/$PROJECT_ID/sengreen-dashboard:latest'
+  - 'gcr.io/$PROJECT_ID/sengreen:latest'
