@@ -2,12 +2,27 @@ type Props = {
   title: string
   rows: any[]
   type: 'collecte' | 'users' | 'depot' | 'historique'
+  users?: any[]
 }
 
+import { useState } from 'react'
 import { formatDate } from '../lib/date'
 import { parsePosition } from '../lib/geo'
+import { DetailModal } from './DetailModal'
 
-export function DashboardTable({ title, rows, type }: Props) {
+export function DashboardTable({ title, rows, type, users = [] }: Props) {
+  const [selectedItem, setSelectedItem] = useState<any>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  
+  const handleRowClick = (item: any) => {
+    setSelectedItem(item)
+    setIsModalOpen(true)
+  }
+  
+  const handleCloseModal = () => {
+    setSelectedItem(null)
+    setIsModalOpen(false)
+  }
   return (
     <section className="eco-card rounded-xl p-6">
       <div className="flex items-center space-x-2 mb-4">
@@ -56,7 +71,12 @@ export function DashboardTable({ title, rows, type }: Props) {
           </thead>
                       <tbody>
               {rows.map((row, idx) => (
-                <tr key={idx} className="odd:bg-white even:bg-green-50/50 hover:bg-green-100/30 transition-colors">
+                <tr 
+                  key={idx} 
+                  className="odd:bg-white even:bg-green-50/50 hover:bg-green-100/30 transition-colors cursor-pointer"
+                  onClick={() => handleRowClick(row)}
+                  title="Cliquer pour voir les détails"
+                >
                 {type === 'collecte' && (
                   <>
                     <td className="px-3 py-2">{row.organisateur || 'N/A'}</td>
@@ -110,6 +130,14 @@ export function DashboardTable({ title, rows, type }: Props) {
           </tbody>
         </table>
       </div>
+      
+      <DetailModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        item={selectedItem}
+        type={type}
+        users={users}
+      />
     </section>
   )
 }

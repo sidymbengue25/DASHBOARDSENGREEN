@@ -93,18 +93,20 @@ export function DashboardMap({ collectes, depots }: Props) {
 
       const totalItems = zoneCollectes.length + zoneDepots.length
       
-      // Couleur et taille selon la densité
+      // Couleur et taille selon la densité (rayons augmentés)
       let color = '#10B981' // Vert par défaut
-      let opacity = 0.3
-      let radius = Math.max(100, totalItems * 50)
+      let opacity = 0.4
+      let radius = Math.max(200, totalItems * 120) // Rayon minimum 200m, facteur x2.4
 
-      if (totalItems > 5) {
+      if (totalItems > 3) {
         color = '#F59E0B' // Orange pour densité moyenne
-        opacity = 0.5
+        opacity = 0.6
+        radius = Math.max(300, totalItems * 150) // Rayon plus grand pour les zones moyennes
       }
-      if (totalItems > 10) {
+      if (totalItems > 6) {
         color = '#EF4444' // Rouge pour haute densité
-        opacity = 0.7
+        opacity = 0.8
+        radius = Math.max(400, totalItems * 200) // Rayon encore plus grand pour les zones denses
       }
 
       zones.push({

@@ -139,6 +139,8 @@ interface HeatmapPoint {
 interface AdvancedGISModuleProps {
   collectes: any[]
   depots: any[]
+  historiqueDepots?: any[]
+  users?: any[]
 }
 
 // Composant de carte de chaleur
@@ -258,8 +260,15 @@ function MeasurementTool({
   return null
 }
 
-export const AdvancedGISModule: React.FC<AdvancedGISModuleProps> = ({ collectes, depots }) => {
+export const AdvancedGISModule: React.FC<AdvancedGISModuleProps> = ({ collectes, depots, historiqueDepots = [], users = [] }) => {
   const [selectedLayer, setSelectedLayer] = useState<string>('standard')
+  
+  // Fonction pour récupérer le nom d'un utilisateur par son ID
+  const getUserName = (userId: string): string => {
+    if (!userId) return 'Inconnu'
+    const user = users.find(u => u.id === userId || u.uid === userId)
+    return user ? (user.nom || user.name || user.displayName || 'Utilisateur') : userId.substring(0, 8) + '...'
+  }
   const [showHeatmap, setShowHeatmap] = useState(false)
   const [showClusters, setShowClusters] = useState(false)
   const [selectedWasteType, setSelectedWasteType] = useState<string>('all')
@@ -664,7 +673,7 @@ export const AdvancedGISModule: React.FC<AdvancedGISModuleProps> = ({ collectes,
         </div>
         
         {/* Carte principale */}
-        <div className="h-[500px] rounded-lg overflow-hidden border border-gray-200 mb-6">
+        <div className="h-[600px] rounded-lg overflow-hidden border border-gray-200 mb-6">
           <MapContainer 
             center={senegalCenter} 
             zoom={7} 
@@ -684,14 +693,16 @@ export const AdvancedGISModule: React.FC<AdvancedGISModuleProps> = ({ collectes,
               return (
                 <Marker key={`c-${idx}`} position={parsed} icon={icon}>
                   <Popup>
-                    <div className="text-sm space-y-2">
-                      <div className="flex items-center space-x-2">
+                    <div className="text-sm space-y-1 min-w-48">
+                      <div className="flex items-center space-x-2 mb-2">
                         <span className="text-lg">🗂️</span>
                         <div className="font-medium text-green-700">Collecte organisée</div>
                       </div>
                       <div><strong>Organisateur:</strong> {c.organisateur || 'N/A'}</div>
-                      <div><strong>Date collecte:</strong> {formatDate(c.dateCollecte)}</div>
-                      <div><strong>Heure:</strong> {c.heureCollecte || 'N/A'}</div>
+                      {c.creePar && (
+                        <div><strong>Créé par:</strong> {getUserName(c.creePar)}</div>
+                      )}
+                      <div><strong>Date:</strong> {formatDate(c.dateCollecte)} à {c.heureCollecte || '00:00'}</div>
                       <div><strong>Statut:</strong> 
                         <span className={`ml-1 px-2 py-1 rounded text-xs ${
                           c.termine ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
@@ -699,7 +710,6 @@ export const AdvancedGISModule: React.FC<AdvancedGISModuleProps> = ({ collectes,
                           {c.termine ? 'Terminée' : 'En cours'}
                         </span>
                       </div>
-                      {c.commentaire && <div><strong>Commentaire:</strong> {c.commentaire}</div>}
                     </div>
                   </Popup>
                 </Marker>
@@ -714,28 +724,92 @@ export const AdvancedGISModule: React.FC<AdvancedGISModuleProps> = ({ collectes,
               const status = d.ramasse ? 'cleaned' : 'normal'
               const icon = createStatusIcon(status, 'depot')
               
+              // Rechercher l'historique correspondant si le dépôt est ramassé
+              const historique = d.ramasse && d.id ? 
+                historiqueDepots.find(h => h.depotId === d.id) : null
+              
               return (
                 <Marker key={`d-${idx}`} position={parsed} icon={icon}>
                   <Popup>
-                    <div className="text-sm space-y-2">
-                      <div className="flex items-center space-x-2">
+                    <div className="text-sm space-y-1 min-w-64 max-w-sm">
+                      <div className="flex items-center space-x-2 mb-1">
                         <span className="text-lg">🗑️</span>
                         <div className="font-medium text-red-700">Dépôt signalé</div>
                       </div>
+                      
                       <div><strong>Type:</strong> {d.type_depot || 'Non spécifié'}</div>
-                      <div><strong>Ramassé:</strong> 
+                      <div><strong>Statut:</strong> 
                         <span className={`ml-1 px-2 py-1 rounded text-xs ${
                           d.ramasse ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}>
-                          {d.ramasse ? 'Oui' : 'Non'}
+                          {d.ramasse ? 'Ramassé' : 'En attente'}
                         </span>
                       </div>
-                      <div><strong>Date:</strong> {formatDate(d.heure)}</div>
-                      {d.commentaire && <div><strong>Commentaire:</strong> {d.commentaire}</div>}
-                      {d.image_url && (
-                        <div>
-                          <strong>Image:</strong>
-                          <img src={d.image_url} alt="Dépôt" className="mt-2 max-w-32 rounded" />
+                      <div><strong>Signalé le:</strong> {formatDate(d.heure)}</div>
+                      {d.userId && (
+                        <div><strong>Par:</strong> {getUserName(d.userId)}</div>
+                      )}
+
+                      {/* Image du dépôt initial - toujours visible */}
+                      <div className="border-t border-gray-200 pt-1 mt-1">
+                        <strong>Image signalement:</strong>
+                        {d.image_url ? (
+                          <img 
+                            src={d.image_url} 
+                            alt="Dépôt signalé" 
+                            className="mt-1 max-w-full h-32 object-cover rounded border shadow-sm"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none'
+                              e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                            }}
+                          />
+                        ) : null}
+                        <div className={`mt-1 p-2 bg-gray-100 border border-gray-300 rounded text-center text-xs text-gray-600 ${d.image_url ? 'hidden' : ''}`}>
+                          📷 Aucune image disponible
+                        </div>
+                      </div>
+
+                      {/* Informations de l'historique si ramassé */}
+                      {historique && (
+                        <div className="border-t border-green-200 mt-2 pt-2 bg-green-50 rounded p-2 -mx-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <span className="text-base">✅</span>
+                            <div className="font-medium text-green-700 text-xs">Ramassage effectué</div>
+                          </div>
+                          
+                          <div className="space-y-1 text-green-800 text-xs">
+                            <div><strong>Le:</strong> {formatDate(historique.dateRamassage)}</div>
+                            {historique.ramassePar && (
+                              <div><strong>Par:</strong> {getUserName(historique.ramassePar)}</div>
+                            )}
+                            {historique.signalePar && (
+                              <div><strong>Signalé par:</strong> {getUserName(historique.signalePar)}</div>
+                            )}
+                          </div>
+
+                          {/* Flèche compacte */}
+                          <div className="flex justify-center my-1">
+                            <div className="text-green-600 text-sm animate-bounce">↓</div>
+                          </div>
+
+                          {/* Image d'historique toujours visible */}
+                          <div>
+                            <strong className="text-green-700 text-xs">Après nettoyage:</strong>
+                            {historique.imageRamassage ? (
+                              <img 
+                                src={historique.imageRamassage} 
+                                alt="Après ramassage" 
+                                className="mt-1 max-w-full h-32 object-cover rounded border border-green-300 shadow-sm" 
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none'
+                                  e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                                }}
+                              />
+                            ) : null}
+                            <div className={`mt-1 p-2 bg-green-100 border border-green-300 rounded text-center ${historique.imageRamassage ? 'hidden' : ''}`}>
+                              <div className="text-green-600 text-xs">✅ Zone nettoyée - Aucune image</div>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>

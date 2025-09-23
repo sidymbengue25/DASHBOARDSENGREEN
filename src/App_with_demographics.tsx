@@ -67,15 +67,15 @@ export default function App() {
             <DashboardCharts collectes={collectes} depots={[...depots, ...historiqueDepots]} />
             <DashboardMap collectes={collectes} depots={[...depots, ...historiqueDepots]} />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <DashboardTable title="Collectes organisées" rows={collectes} type="collecte" users={users} />
-              <DashboardTable title="Utilisateurs" rows={users} type="users" users={users} />
-              <DashboardTable title="Dépôts signalés" rows={depots} type="depot" users={users} />
-              <DashboardTable title="Historique dépôts" rows={historiqueDepots} type="historique" users={users} />
+              <DashboardTable title="Collectes organisées" rows={collectes} type="collecte" />
+              <DashboardTable title="Utilisateurs" rows={users} type="users" />
+              <DashboardTable title="Dépôts signalés" rows={depots} type="depot" />
+              <DashboardTable title="Historique dépôts" rows={historiqueDepots} type="historique" />
             </div>
           </div>
         )
       case 'map':
-        return <AdvancedGISModule collectes={collectes} depots={depots} historiqueDepots={historiqueDepots} users={users} />
+        return <AdvancedGISModule collectes={collectes} depots={depots} />
       case 'density':
         return (
           <div className="space-y-6">

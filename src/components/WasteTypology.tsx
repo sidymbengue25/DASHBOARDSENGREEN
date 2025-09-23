@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { formatDate } from '../lib/date'
 
 interface WasteItem {
   id: string
@@ -72,61 +73,97 @@ export const WasteTypology: React.FC<WasteTypologyProps> = ({ collectes = [], de
     })
   }, [])
 
-  // Générer des données simulées
-  const generateWasteItems = useCallback(() => {
-    const items: WasteItem[] = []
-    const allData = [...collectes, ...depots]
+  // Mapper les types réels aux catégories
+  const mapTypeToCategory = (type: string): string => {
+    if (!type) return 'autre'
+    const typeNormalized = type.toLowerCase()
     
-    // Vérification que nous avons des données
-    if (allData.length === 0) {
-      // Générer des données d'exemple si aucune donnée n'est fournie
-      for (let i = 0; i < 20; i++) {
-        const category = categories[Math.floor(Math.random() * categories.length)]
-        const confidence = Math.random() * 100
-        
-        items.push({
-          id: `waste-example-${i}`,
-          type: 'mixed',
-          category: category.id,
-          confidence: confidence,
-          location: `Point d'exemple ${i + 1}`,
-          timestamp: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-          description: `Déchet ${category.name.toLowerCase()} détecté par IA`
-        })
-      }
-    } else {
-      // Générer des items basés sur les collectes et dépôts
-      allData.forEach((item, index) => {
-        const category = categories[Math.floor(Math.random() * categories.length)]
-        const confidence = Math.random() * 100
-        
-        items.push({
-          id: `waste-${index}-${Date.now()}`, // ID plus unique
-          type: item.type || 'mixed',
-          category: category.id,
-          confidence: confidence,
-          location: item.adresse || item.address || item.nom || `Point ${index + 1}`,
-          timestamp: item.date || item.timestamp || new Date().toISOString(),
-          description: `Déchet ${category.name.toLowerCase()} détecté par IA`
-        })
-      })
-    }
+    // Mapping direct des types de vos données
+    if (typeNormalized === 'plastique') return 'plastique'
+    if (typeNormalized === 'papier') return 'papier'
+    if (typeNormalized === 'verre') return 'verre'
+    if (typeNormalized === 'alimentaire') return 'alimentaire'
+    if (typeNormalized === 'electronique') return 'electronique'
+    if (typeNormalized === 'divers') return 'divers'
+    
+    return 'autre'
+  }
 
-    setWasteItems(items)
-    calculateStats(items)
-    setLoading(false)
-  }, [collectes, depots, categories, calculateStats])
 
   // Effet pour générer les données au montage et quand les props changent
   useEffect(() => {
+    console.log('🔄 useEffect déclenché:', { collectes: collectes.length, depots: depots.length })
     setLoading(true)
-    // Simuler un délai de traitement IA
-    const timeout = setTimeout(() => {
-      generateWasteItems()
-    }, 500)
+    
+    const processData = () => {
+      const items: WasteItem[] = []
+      
+      // Traiter les dépôts
+      depots.forEach((depot, index) => {
+        if (depot.type_depot) {
+          const category = mapTypeToCategory(depot.type_depot)
+          const categoryInfo = categories.find(c => c.id === category)
+          
+          let confidence = 70
+          if (depot.image_url) confidence += 20
+          if (depot.commentaire) confidence += 10
+          confidence = Math.min(confidence, 95)
+          
+          items.push({
+            id: depot.id || `depot-${index}`,
+            type: depot.type_depot,
+            category: category,
+            confidence: confidence,
+            location: `Dépôt ${index + 1}`,
+            timestamp: depot.heure?.toDate?.()?.toISOString() || new Date().toISOString(),
+            imageUrl: depot.image_url,
+            description: depot.commentaire || `${categoryInfo?.name || 'Déchet'} signalé`
+          })
+        }
+      })
+      
+      // Traiter les collectes
+      collectes.forEach((collecte, index) => {
+        if (collecte.organisateur) {
+          items.push({
+            id: collecte.id || `collecte-${index}`,
+            type: 'collecte',
+            category: 'divers',
+            confidence: 85,
+            location: `Collecte par ${collecte.organisateur}`,
+            timestamp: collecte.dateCollecte?.toDate?.()?.toISOString() || new Date().toISOString(),
+            description: `Collecte organisée par ${collecte.organisateur}`
+          })
+        }
+      })
 
+      // Données d'exemple si vide
+      if (items.length === 0) {
+        console.log('⚠️ Génération d\'exemples')
+        for (let i = 0; i < 10; i++) {
+          const category = categories[Math.floor(Math.random() * categories.length)]
+          items.push({
+            id: `example-${i}`,
+            type: 'example',
+            category: category.id,
+            confidence: 60 + Math.random() * 35,
+            location: `Point d'exemple ${i + 1}`,
+            timestamp: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+            description: `Exemple de ${category.name.toLowerCase()}`
+          })
+        }
+      }
+
+      console.log('✅ Items générés:', items.length)
+      setWasteItems(items)
+      calculateStats(items)
+      setLoading(false)
+    }
+    
+    // Délai réduit
+    const timeout = setTimeout(processData, 100)
     return () => clearTimeout(timeout)
-  }, [generateWasteItems])
+  }, [collectes, depots, calculateStats])
 
   // Filtrage des éléments
   const filteredItems = wasteItems.filter(item => {
@@ -152,19 +189,6 @@ export const WasteTypology: React.FC<WasteTypologyProps> = ({ collectes = [], de
     return 'Faible'
   }
 
-  const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    } catch (error) {
-      return 'Date invalide'
-    }
-  }
 
   if (loading) {
     return (
@@ -343,20 +367,57 @@ export const WasteTypology: React.FC<WasteTypologyProps> = ({ collectes = [], de
               {filteredItems.slice(0, 20).map((item) => {
                 const category = categories.find(c => c.id === item.category)
                 return (
-                  <div key={item.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center space-x-4">
-                      <div className="text-2xl">{category?.icon}</div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-gray-900">{category?.name}</p>
-                        <p className="text-sm text-gray-500 truncate">{item.location}</p>
-                        <p className="text-xs text-gray-400">{formatDate(item.timestamp)}</p>
+                  <div key={item.id} className="flex items-start space-x-4 p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-all">
+                    {/* Image si disponible */}
+                    {item.imageUrl ? (
+                      <div className="flex-shrink-0">
+                        <img 
+                          src={item.imageUrl} 
+                          alt={`${category?.name} détecté`}
+                          className="w-16 h-16 rounded-lg object-cover border"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none'
+                          }}
+                        />
                       </div>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getConfidenceColor(item.confidence)}`}>
-                        {Math.round(item.confidence)}% • {getConfidenceLabel(item.confidence)}
+                    ) : (
+                      <div className="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <span className="text-2xl">{category?.icon}</span>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">IA Classification</p>
+                    )}
+                    
+                    {/* Contenu principal */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-semibold text-gray-900 flex items-center">
+                            {category?.icon} {category?.name}
+                            {item.type === 'collecte' && (
+                              <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                Collecte
+                              </span>
+                            )}
+                          </h4>
+                          <p className="text-sm text-gray-600 mt-1">{item.location}</p>
+                          <p className="text-sm text-gray-500 mt-1">{item.description}</p>
+                          <p className="text-xs text-gray-400 mt-2">
+                            📅 {formatDate(item.timestamp)}
+                          </p>
+                        </div>
+                        
+                        {/* Badge de confiance */}
+                        <div className="flex-shrink-0 text-right">
+                          <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getConfidenceColor(item.confidence)}`}>
+                            {Math.round(item.confidence)}%
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {getConfidenceLabel(item.confidence)}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {item.type === 'collecte' ? 'Organisée' : 'Détecté IA'}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )
