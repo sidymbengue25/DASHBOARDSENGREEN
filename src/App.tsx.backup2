@@ -59,12 +59,14 @@ export default function App() {
             <DashboardKPIs
               totalCollectes={collectes.length}
               totalCollectesTerminees={collectes.filter(c => c.termine).length}
-              totalDepots={depots.length}
+              totalDepots={depots.length + historiqueDepots.length}
               totalUsers={users.length}
               loading={loading}
             />
-            <DashboardCharts collectes={collectes} depots={[...depots, ...historiqueDepots]} />
-            <DashboardMap collectes={collectes} depots={[...depots, ...historiqueDepots]} />
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <DashboardCharts collectes={collectes} depots={[...depots, ...historiqueDepots]} />
+              <DashboardMap collectes={collectes} depots={[...depots, ...historiqueDepots]} />
+            </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <DashboardTable title="Collectes organisées" rows={collectes} type="collecte" />
               <DashboardTable title="Utilisateurs" rows={users} type="users" />
@@ -153,3 +155,5 @@ export default function App() {
     </div>
   )
 }
+
+

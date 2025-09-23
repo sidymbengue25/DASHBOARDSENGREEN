@@ -5,6 +5,8 @@ import App from './App'
 import './styles.css'
 
 import { ErrorBoundary } from './ErrorBoundary'
+import { AuthProvider } from './contexts/AuthContext'
+import { ProtectedRoute } from './components/ProtectedRoute'
 
 const rootEl = document.getElementById('root')
 if (!rootEl) {
@@ -14,7 +16,11 @@ if (!rootEl) {
 ReactDOM.createRoot(rootEl).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <AuthProvider>
+        <ProtectedRoute>
+          <App />
+        </ProtectedRoute>
+      </AuthProvider>
     </ErrorBoundary>
   </StrictMode>
 )

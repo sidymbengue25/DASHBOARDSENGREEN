@@ -1,7 +1,7 @@
 type Props = {
   title: string
   rows: any[]
-  type: 'collecte' | 'users' | 'depot'
+  type: 'collecte' | 'users' | 'depot' | 'historique'
 }
 
 import { formatDate } from '../lib/date'
@@ -12,7 +12,7 @@ export function DashboardTable({ title, rows, type }: Props) {
     <section className="eco-card rounded-xl p-6">
       <div className="flex items-center space-x-2 mb-4">
         <span className="text-2xl">
-          {type === 'collecte' ? '🗑️' : type === 'users' ? '👥' : '⚠️'}
+          {type === 'collecte' ? '🗑️' : type === 'users' ? '👥' : type === 'historique' ? '📚' : '⚠️'}
         </span>
         <h3 className="font-semibold text-lg text-green-700">{title}</h3>
       </div>
@@ -42,6 +42,14 @@ export function DashboardTable({ title, rows, type }: Props) {
                   <th className="px-3 py-2 text-left">Localisation</th>
                   <th className="px-3 py-2 text-left">État</th>
                   <th className="px-3 py-2 text-left">Date/Heure</th>
+                </>
+              )}
+              {type === 'historique' && (
+                <>
+                  <th className="px-3 py-2 text-left">Type</th>
+                  <th className="px-3 py-2 text-left">État</th>
+                  <th className="px-3 py-2 text-left">Date signalement</th>
+                  <th className="px-3 py-2 text-left">Date ramassage</th>
                 </>
               )}
             </tr>
@@ -83,6 +91,20 @@ export function DashboardTable({ title, rows, type }: Props) {
                     </>
                   )
                 })()}
+                {type === 'historique' && (
+                  <>
+                    <td className="px-3 py-2">{row.type || 'N/A'}</td>
+                    <td className="px-3 py-2">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        row.etatDepot === 'ramasse' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {row.etatDepot === 'ramasse' ? '✅ Ramassé' : '⏳ En cours'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2">{formatDate(row.dateSignalement)}</td>
+                    <td className="px-3 py-2">{row.dateRamassage ? formatDate(row.dateRamassage) : '-'}</td>
+                  </>
+                )}
               </tr>
             ))}
           </tbody>
