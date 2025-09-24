@@ -63,7 +63,7 @@ export default function App() {
             <DashboardKPIs
               totalCollectes={collectes.length}
               totalCollectesTerminees={collectes.filter(c => c.termine).length}
-              totalDepots={depots.length + historiqueDepots.length}
+              totalDepots={depots.length}
               totalUsers={users.length}
               loading={loading}
             />
